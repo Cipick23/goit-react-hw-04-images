@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import React, { useState, useEffect } from 'react';
 import PropTypes from 'prop-types';
 import styles from './ImageGallery.module.css';
 import Loader from 'components/loader/Loader';
@@ -6,90 +6,67 @@ import ImageGalleryItem from 'components/imageGalleryItem/ImageGalleryItem';
 import Button from 'components/button/Button';
 import articles from 'services/api';
 
-  class ImageGallery extends Component {
+const ImageGallery = ({ onClick, inputValue, page, loadMore }) => {
+  const [images, setImages] = useState([]);
+  const [status, setStatus] = useState('No network request is happening.');
 
-  state = {
-    images: [],
-    status: 'No network request is happening.',
-  };
+  useEffect(() => {
+    const fetchImages = async () => {
+      try {
+        setStatus('A network request has been initiated and is in progress...');
+        const response = await articles(inputValue, page);
+        setImages(prevImages => [...prevImages, ...response.hits]);
+        setStatus('The network request has completed successfully');
+      } catch (error) {
+        setStatus('The network request has failed.');
+      }
+    };
 
-  componentDidUpdate(prevProps, prevState) {
-    if (prevProps.inputValue !== this.props.inputValue) {
-      this.fetchImages();
+    // Doar dacă există o valoare în inputValue, facem solicitarea la API
+    if (inputValue) {
+      fetchImages();
     }
-    if (prevProps.page !== this.props.page && this.props.page > 1) {
-      this.LoadMoreImages();
-    }
+  }, [inputValue, page]);
+
+  if (!inputValue) {
+    // Aici poți decide să afișezi un mesaj sau orice altceva în locul imaginilor
+    return (
+      <p className={styles.errorMessage}>
+        Enter the search term to display images.
+      </p>
+    );
   }
 
-  fetchImages = () => {
-    const { inputValue, page } = this.props;
-  
-    this.setState({ status: 'A network request has been initiated and is in progress...' });
-  
-    setTimeout(() => {
-      articles(inputValue, page)
-        .then(response => {
-          this.setState({
-            images: response.hits,
-            status: 'The network request has completed successfully',
-          });
-        })
-        .catch(error => this.setState({ status: 'The network request has failed.' }));
-    }, 1000);
-  };
-  
-  LoadMoreImages = () => {
-    const { inputValue, page } = this.props;
-  
-    this.setState({ status: 'A network request has been initiated and is in progress...' });
-  
-    setTimeout(() => {
-      articles(inputValue, page)
-        .then(response => {
-          this.setState(prevState => ({
-            images: [...prevState.images, ...response.hits],
-            status: 'The network request has completed successfully',
-          }));
-        })
-        .catch(error => this.setState({ status: 'The network request has failed.' }));
-    }, 1000);
-  };
-
-  render() {
-    const { images, status } = this.state;
-
-    if (status === 'A network request has been initiated and is in progress...') {
-      return <Loader />;
-    }
-
-    if (status === 'The network request has completed successfully') {
-      return (
-        <>
-          <ul className={styles.ImageGallery}>
-            {images.map(({ id, largeImageURL, tags }) => (
-              <ImageGalleryItem
-                key={id}
-                url={largeImageURL}
-                tags={tags}
-                onClick={this.props.onClick}
-              />
-            ))}
-          </ul>
-          {this.state.images.length !== 0 ? (
-            <Button onClick={this.props.loadMore} />
-          ) : (
-            alert('No images to be found')
-          )}
-        </>
-      );
-    }
+  if (status === 'A network request has been initiated and is in progress...') {
+    return <Loader />;
   }
-}
+
+  if (status === 'The network request has completed successfully') {
+    return (
+      <>
+        <ul className={styles.ImageGallery}>
+          {images.map(({ id, largeImageURL, tags }) => (
+            <ImageGalleryItem
+              key={id}
+              url={largeImageURL}
+              tags={tags}
+              onClick={onClick}
+            />
+          ))}
+        </ul>
+        {images.length !== 0 && <Button onClick={loadMore} />}
+      </>
+    );
+  }
+
+  return null;
+};
 
 ImageGallery.propTypes = {
   onClick: PropTypes.func.isRequired,
   inputValue: PropTypes.string.isRequired,
+  page: PropTypes.number.isRequired,
+  loadMore: PropTypes.func.isRequired,
 };
 
 export default ImageGallery;

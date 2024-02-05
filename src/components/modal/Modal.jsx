@@ -1,49 +1,47 @@
-import { Component } from 'react';
+import { useEffect } from 'react';
 import * as basicLightbox from 'basiclightbox';
 import 'basiclightbox/dist/basicLightbox.min.css';
 import styles from './Modal.module.css';
 
-class Modal extends Component {
-  componentDidMount() {
-    this.instance = basicLightbox.create(`
+const Modal = ({ url, onClose }) => {
+  useEffect(() => {
+    const instance = basicLightbox.create(`
       <div className="${styles.Modal}">
-          <img 
-              src='${this.props.url}'
-              width="900"
-              height="800"
-              alt="Large Image"
-          >
+        <img 
+          src='${url}'
+          width="900"
+          height="800"
+          alt="Large Image"
+        >
       </div>
     `);
 
-    this.instance.show();
+    instance.show();
 
-    window.addEventListener('keydown', this.handleKeyPress);
-    this.instance.element().addEventListener('click', this.handleClickOutside);
-  }
+    const handleKeyPress = e => {
+      if (e.key === 'Escape') {
+        instance.close();
+        onClose();
+      }
+    };
 
-  componentWillUnmount() {
-    window.removeEventListener('keydown', this.handleKeyPress);
-    this.instance.element().removeEventListener('click', this.handleClickOutside);
-  }
+    const handleClickOutside = e => {
+      if (e.target === e.currentTarget) {
+        instance.close();
+        onClose();
+      }
+    };
 
-  handleKeyPress = e => {
-    if (e.key === 'Escape') {
-      this.instance.close();
-      this.props.onClose();
-    }
-  };
+    window.addEventListener('keydown', handleKeyPress);
+    instance.element().addEventListener('click', handleClickOutside);
 
-  handleClickOutside = e => {
-    if (e.target === e.currentTarget) {
-      this.instance.close();
-      this.props.onClose();
-    }
-  };
+    return () => {
+      window.removeEventListener('keydown', handleKeyPress);
+      instance.element().removeEventListener('click', handleClickOutside);
+    };
+  }, [url, onClose]);
 
-  render() {
-    return null;
-  }
-}
+  return null;
+};
 
 export default Modal;

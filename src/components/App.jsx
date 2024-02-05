@@ -1,48 +1,44 @@
-import React, { Component } from "react";
-import Searchbar from "./searchbar/Searchbar";
-import ImageGallery from "./imageGallery/ImageGallery";
-import Modal from "./modal/Modal";
+import React, { useState } from 'react';
+import Searchbar from './searchbar/Searchbar';
+import ImageGallery from './imageGallery/ImageGallery';
+import Modal from './modal/Modal';
 
-class App extends Component {
+const App = () => {
+  const [inputValue, setInputValue] = useState('');
+  const [modalImg, setModalImg] = useState('');
+  const [showModal, setShowModal] = useState(false);
+  const [page, setPage] = useState(1);
 
-  state = {
-    inputValue: '',
-    modalImg: '',
-    showModal: false,
-    page: 1,
-  }
-
-  handleInputChange = handleValue => {
-    this.setState({ inputValue: handleValue, page: 1 })
-  }  
-
-  handleModalToggle = () => {
-    this.setState(({ showModal }) => ({ showModal: !showModal }))
-  }  
-
-  showModalImg = url => {
-    this.handleModalToggle();
-    this.setState({ modalImg: url });
-  }
-
-  loadMore = () => {
-    this.setState(prevState => ({
-      page: prevState.page + 1,
-    }));
+  const handleInputChange = handleValue => {
+    setInputValue(handleValue);
+    setPage(1);
   };
 
+  const handleModalToggle = () => {
+    setShowModal(prevShowModal => !prevShowModal);
+  };
 
-  render() {
-    const { modalImg, showModal ,page} = this.state;
+  const showModalImg = url => {
+    handleModalToggle();
+    setModalImg(url);
+  };
 
-    return (
-      <>
-        <Searchbar handleInputChange={this.handleInputChange}/>
-        <ImageGallery inputValue={this.state.inputValue} onClick={this.showModalImg} loadMore={this.loadMore} page={page}/>
-        {showModal && <Modal url={modalImg} onClose={this.handleModalToggle} />}
-      </>
-    )
-  }
-}
+  const loadMore = () => {
+    setPage(prevPage => prevPage + 1);
+  };
+
+  return (
+    <>
+      <Searchbar handleInputChange={handleInputChange} />
+      <ImageGallery
+        inputValue={inputValue}
+        onClick={showModalImg}
+        loadMore={loadMore}
+        page={page}
+      />
+      {showModal && <Modal url={modalImg} onClose={handleModalToggle} />}
+    </>
+  );
+};
 
 export default App;
